@@ -5,6 +5,7 @@ import getVisibility from 'view/utils/visibility';
 import activeTab from 'utils/active-tab';
 import { requestAnimationFrame, cancelAnimationFrame } from 'utils/request-animation-frame';
 import { getBreakpoint, setBreakpoint } from 'view/utils/breakpoint';
+import * as ControlsLoader from 'controller/controls-loader';
 
 let ControlsModule;
 
@@ -21,9 +22,8 @@ define([
     'view/logo',
     'view/preview',
     'view/title',
-    'controller/controls-loader',
 ], function(events, states, Events, utils, _, requestFullscreenHelper, flagNoFocus,
-            ClickHandler, CaptionsRenderer, Logo, Preview, Title, ControlsLoader) {
+            ClickHandler, CaptionsRenderer, Logo, Preview, Title) {
 
     const _styles = utils.style;
     const _bounds = utils.bounds;

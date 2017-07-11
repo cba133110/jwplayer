@@ -1,3 +1,5 @@
+import * as ControlsLoader from 'controller/controls-loader';
+
 define([
     'plugins/plugins',
     'playlist/loader',
@@ -7,10 +9,9 @@ define([
     'utils/underscore',
     'utils/helpers',
     'events/events',
-    'controller/controls-loader',
     'polyfills/promise',
     'polyfills/base64'
-], function(plugins, PlaylistLoader, ScriptLoader, EmbedSwf, Constants, _, utils, events, ControlsLoader) {
+], function(plugins, PlaylistLoader, ScriptLoader, EmbedSwf, Constants, _, utils, events) {
 
     var _pluginLoader;
     var _playlistLoader;

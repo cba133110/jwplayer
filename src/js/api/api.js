@@ -1,8 +1,8 @@
 import instances from 'api/players';
+import CoreLoader from 'api/core-loader';
 
 define([
     'api/timer',
-    'controller/controller',
     'plugins/plugins',
     'events/events',
     'events/states',
@@ -10,7 +10,7 @@ define([
     'utils/helpers',
     'utils/underscore',
     'version'
-], function(Timer, Controller, plugins,
+], function(Timer, plugins,
             events, states, Events, utils, _, version) {
 
     let instancesCreated = 0;
@@ -21,7 +21,7 @@ define([
      * @param {HTMLElement} element
      */
     function setupController(api, element) {
-        const controller = new Controller(element);
+        const controller = new CoreLoader(element);
 
         // capture the ready event and add setup time to it
         controller.on(events.JWPLAYER_READY, (event) => {
@@ -205,7 +205,18 @@ define([
                 });
 
                 options.id = playerId;
-                _controller.setup(options, this);
+                _controller.setup(options).then(Controller => {
+                    // Replace CoreLoader instance with Controller instance
+                    const coreLoader = _controller;
+                    if (!coreLoader.originalConfig) {
+                        // Exit if `playerDestroy` was called on CoreLoader clearing the config
+                        return;
+                    }
+                    _controller = new Controller(coreLoader.originalContainer);
+                    _controller._events = coreLoader._events;
+                    coreLoader._events = {};
+                    _controller.setup(coreLoader.originalConfig, this);
+                });
 
                 return this;
             },
