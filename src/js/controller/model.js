@@ -1,13 +1,14 @@
+import SimpleModel from '../model/simplemodel';
+
 define([
     'utils/helpers',
     'providers/providers',
     'controller/qoe',
     'utils/underscore',
     'utils/backbone.events',
-    'utils/simplemodel',
     'events/events',
     'events/states'
-], function(utils, Providers, QOE, _, Events, SimpleModel, events, states) {
+], function(utils, Providers, QOE, _, Events, events, states) {
 
     // Represents the state of the player
     var Model = function() {
@@ -17,7 +18,7 @@ define([
         var _beforecompleted = false;
         var _attached = true;
 
-        this.mediaController = _.extend({}, Events);
+        this.mediaController = Object.assign({}, Events);
         this.mediaModel = new MediaModel();
 
         QOE.model(this);
@@ -26,7 +27,7 @@ define([
 
         this.setup = function(config) {
 
-            _.extend(this.attributes, config, {
+            Object.assign(this.attributes, config, {
                 // always start on first playlist item
                 item: 0,
                 itemMeta: {},
@@ -55,7 +56,7 @@ define([
         };
 
         function _videoEventHandler(type, data) {
-            var evt = _.extend({}, data, { type: type });
+            var evt = Object.assign({}, data, { type: type });
             var mediaModel = this.mediaModel;
             switch (type) {
                 case 'flashThrottle':
@@ -108,7 +109,7 @@ define([
                         this.set('duration', duration);
                     }
                     var itemMeta = this.get('itemMeta');
-                    _.extend(itemMeta, data.metadata);
+                    Object.assign(itemMeta, data.metadata);
                     break;
                 case events.JWPLAYER_MEDIA_BUFFER_FULL:
                     // media controller
@@ -158,7 +159,7 @@ define([
                     this.persistVideoSubtitleTrack(data.currentTrack, data.tracks);
                     break;
                 case 'visualQuality':
-                    var visualQuality = _.extend({}, data);
+                    var visualQuality = Object.assign({}, data);
                     mediaModel.set('visualQuality', visualQuality);
                     break;
                 case 'autoplayFailed':
@@ -520,8 +521,8 @@ define([
         this.set('state', states.IDLE);
     };
 
-    _.extend(Model.prototype, SimpleModel);
-    _.extend(MediaModel.prototype, SimpleModel);
+    Object.assign(Model.prototype, SimpleModel);
+    Object.assign(MediaModel.prototype, SimpleModel);
 
     return Model;
 });

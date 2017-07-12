@@ -1,6 +1,7 @@
-import _ from 'utils/underscore';
+import ApiQueueDecorator from './api-queue';
+import SimpleModel from '../model/simplemodel';
+import Timer from 'api/timer';
 import Events from 'utils/backbone.events';
-import Model from 'controller/model';
 
 let controllerPromise = null;
 
@@ -8,36 +9,56 @@ function loadController() {
     if (!controllerPromise) {
         controllerPromise = new Promise(function (resolve) {
             require.ensure(['controller/controller'], function (require) {
-                const controller = require('controller/controller');
-                resolve(controller);
+                const Controller = require('controller/controller');
+                resolve(Controller);
             }, 'jwplayer.core');
         });
     }
     return controllerPromise;
 }
 
+const CoreModel = function() {};
+Object.assign(CoreModel.prototype, SimpleModel);
 
 const CoreLoader = function CoreSetup(originalContainer) {
     loadController();
     this._events = {};
-    this._model = new Model();
+    this.controller = null;
+    this.model = new CoreModel();
+    this.model._qoeItem = new Timer();
     this.originalContainer = originalContainer;
-    this.originalConfig = null;
+    this.apiQueue = new ApiQueueDecorator(this, () => true);
 };
 
 /* eslint no-unused-vars: 0 */
 
-_.extend(CoreLoader.prototype, Events, {
-    setup(options) {
-        this.originalConfig = options;
-        return loadController();
+Object.assign(CoreLoader.prototype, {
+    on: Events.on,
+    off: Events.off,
+    setup(options, api) {
+        loadController().then(Controller => {
+            if (!this.apiQueue) {
+                // Exit if `playerDestroy` was called on CoreLoader clearing the config
+                return;
+            }
+            // Assign controller properties to this instance binding api.core to controller
+            const controller = new Controller(api, options, this.originalContainer, this._events, this.apiQueue);
+            this.apiQueue.destroy();
+            this.controller = controller;
+            Object.assign(this, Controller.prototype);
+            Object.assign(this, controller);
+        });
     },
     playerDestroy() {
         // TODO: cancel async setup
+        if (this.apiQueue) {
+            this.apiQueue.destroy();
+        }
         this._events =
-            this._model =
+            this.apiQueue =
             this.originalContainer =
-            this.originalConfig = null;
+            this.model =
+            this.controller = null;
     },
     getContainer() {
         return this.originalContainer;
@@ -45,13 +66,14 @@ _.extend(CoreLoader.prototype, Events, {
 
     // These methods read from the model
     get(property) {
-        return this._model.get(property);
+        return this.model.get(property);
     },
     getItemQoe() {
-        return this._model._qoeItem;
+        return this.model._qoeItem;
     },
     getConfig() {
-        return this._model.getConfiguration();
+        // TODO: include normalized config from setup
+        return Object.assign({}, this.model.attributes);
     },
     getCurrentCaptions() {
         return this.get('captionsIndex');
@@ -63,16 +85,16 @@ _.extend(CoreLoader.prototype, Events, {
         return this.get('containerHeight');
     },
     getMute() {
-        return this._model.getMute();
+        return this.get('mute');
     },
     setMute(toggle) {
-        this._model.setMute(toggle);
+        this.model.set('mute', toggle);
     },
     setVolume(value) {
-        this._model.setVolume(value);
+        this.model.set('volume', value);
     },
     setPlaybackRate(value) {
-        this._model.setPlaybackRate(value);
+        this.model.set('defaultPlaybackRate', value);
     },
     getProvider() {
         return this.get('provider');
@@ -143,15 +165,16 @@ _.extend(CoreLoader.prototype, Events, {
     playlistItem(index, meta) {
 
     },
-    playlistPrev(meta) {
+    playlistNext(meta) {
 
     },
-    playlistNext(meta) {
+    playlistPrev(meta) {
 
     },
     next() {
         // nextUp or related.next();
     },
+
     addButton(img, tooltip, callback, id, btnClass) {},
     removeButton(id) {},
 
@@ -165,7 +188,7 @@ _.extend(CoreLoader.prototype, Events, {
     setCues(cues) {
         // queue this for the view.addCues(cues) OR _model.set('cues', cues);
     },
-    getSafeRegion() {
+    getSafeRegion(excludeControlbar) {
         return {
             x: 0,
             y: 0,

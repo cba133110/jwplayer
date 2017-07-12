@@ -1,8 +1,9 @@
+import { dvrSeekLimit } from 'view/constants';
+
 define([
     'events/events',
     'events/states',
     'utils/backbone.events',
-    'utils/constants',
     'utils/helpers',
     'utils/underscore',
     'view/controls/components/button',
@@ -14,7 +15,7 @@ define([
     'view/controls/next-display-icon',
     'view/controls/nextuptooltip',
     'view/controls/rightclick',
-], function (events, states, Events, Constants, utils, _, button, Controlbar, Dock,
+], function (events, states, Events, utils, _, button, Controlbar, Dock,
              DisplayContainer, RewindDisplayIcon, PlayDisplayIcon, NextDisplayIcon,
              NextUpToolTip, RightClick) {
 
@@ -155,7 +156,7 @@ define([
                 const position = model.get('position');
                 if (model.get('streamType') === 'DVR') {
                     min = max;
-                    max = Math.max(position, Constants.dvrSeekLimit);
+                    max = Math.max(position, dvrSeekLimit);
                 }
                 const newSeek = utils.between(position + amount, min, max);
                 api.seek(newSeek, reasonInteraction());
